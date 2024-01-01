@@ -30,3 +30,5 @@ class ImageClassifier:
 
         label0 = np.argmax(pred0)
         print(self.__class_names[label0])
+        tensor = np.array(image, dtype=np.uint8)
+        plt.imshow(tensor[0])
