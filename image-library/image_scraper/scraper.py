@@ -1,4 +1,3 @@
-import scraper as sc
 #%%
 # because it uses js to load the page, need to use selenium
 import time
@@ -6,43 +5,19 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
 
-
-#%%
-# creates a list of threads on reddit.com/r/photoshopbattles.
-import requests 
-import re
-from bs4 import BeautifulSoup 
-
-def get_original_images():
-	url = "https://www.reddit.com/r/photoshopbattles"
-	page = sc.get_page_source(url)
-
-	soup = BeautifulSoup(page, 'html.parser') 
-	anchors = soup.find_all('a')
-	candidate_links = []
-	for anchor in anchors:
-		link = str(anchor.get('href'))
-		pattern = r'^/r/photoshopbattles/comments/'
-
-		if (re.search(pattern, link) and re.search(r'psbattle', link)):
-			candidate_links.append(link)
-	return list(set(candidate_links))
-
-# %%
-# take a candidate link and get all the photoshopped links
-def get_modified_images(endpoint):
-	new_page = sc.get_page_source("https://www.reddit.com" + endpoint)
-	soup = BeautifulSoup(new_page, 'html.parser') 
-	shopped_anchors = soup.find_all('a')
-	modified_links = []
-	for anchor in shopped_anchors:
-		link = str(anchor.get('href'))
-		# print(link)
-		pattern = r'imgur'
-		if (re.search(pattern, link)):
-			modified_links.append(link)
-
-	return modified_links
+def get_page_source(url):
+    chrome_options = Options()
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--disable-gpu')
+    chrome_options.add_argument('--log-level=3')
+    driver = webdriver.Chrome(options=chrome_options)
+    driver.get(url)
+    # uncomment the below line to get a TON of data
+    # driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    time.sleep(3)
+    page = driver.page_source
+    driver.quit()
+    return page
 
 #%%
 # get the actual images
@@ -89,5 +64,4 @@ def generate_random_string(length):
     characters = string.ascii_letters + string.digits
     random_string = ''.join(secrets.choice(characters) for _ in range(length))
     return random_string
-
-# %%
+#%%

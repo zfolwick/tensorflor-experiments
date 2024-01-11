@@ -27,5 +27,5 @@ for k, v in list_of_modified_image_links.items():
         page = rs.get_page_source(modded)
         actual_shopped_images_urls = rs.get_actual_images(page)
         # save the list of shopped images to processing_queue directory
-        for u in actual_shopped_images_urls:
-            rs.save_image(u)
+        rs.save_images(actual_shopped_images_urls)
+
