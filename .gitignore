@@ -1,2 +1,3 @@
 .vscode/*
 **/__pycache__/*
+image-library/image_scraper/processing_queue/modified/*
