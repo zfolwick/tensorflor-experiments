@@ -5,6 +5,7 @@ original_image_links = rs.get_original_images()
 print(">> SANITY CHECK: list of links to images on the front page")
 print(original_image_links)
 #TODO: persist the original images to disk
+rs.save_images("originals", original_image_links)
 
 #for each original image, visit that page and gather the potentially modified images
 list_of_modified_image_links = {}
@@ -27,5 +28,5 @@ for k, v in list_of_modified_image_links.items():
         page = rs.get_page_source(modded)
         actual_shopped_images_urls = rs.get_actual_images(page)
         # save the list of shopped images to processing_queue directory
-        rs.save_images(actual_shopped_images_urls)
+        rs.save_images("modified", actual_shopped_images_urls)
 

@@ -32,29 +32,35 @@ def get_actual_images(page):
 	return list(set(shopped_image_assets))
 
 #%%
+# Files in windows OS cannot have "?", "&" or superfluous ".", and "/" just messes things up.
+def formatForFs(url):
+        return str(url).replace("https://", "").replace("?", "@").replace("&", "^").replace("/", "#")
+
+#%%
 # persist the images from a given url to disk under a filename
 import requests
 from PIL import Image
 from io import BytesIO
-def save_image(url):
-    filename = "processing_queue/" +  str(url).replace("https://","").replace("/", "&#") + ".jpg"
+def save_image(classification, url):
+    print(url)
+    filename = f"processing_queue/{classification}/" + formatForFs(url) + ".jpg"
     response = requests.get(url)
     if response.status_code == 200:
         # Open the image using Pillow
-        img = Image.open(BytesIO(response.content))
-
-        # Save the image as JPEG
         try:
+            img = Image.open(BytesIO(response.content))
+            # Save the image as JPEG
             img.convert('RGB').save(filename, "JPEG")
         except Exception as e:
             print(f"there was an issue saving {filename}")
+            print(f"the source url is: {url}")
             print(e)
             return
         print(f"Image saved as {filename}")
         
-def save_images(urls):
+def save_images(classification, urls):
     for url in urls:
-        save_image(url)
+        save_image(classification, url)
 #%%
 # just a utility
 import secrets

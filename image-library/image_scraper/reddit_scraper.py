@@ -14,19 +14,20 @@ import re
 from bs4 import BeautifulSoup 
 
 def get_original_images():
-	url = "https://www.reddit.com/r/photoshopbattles"
-	page = sc.get_page_source(url)
+    url = "https://www.reddit.com/r/photoshopbattles"
+    page = sc.get_page_source(url)
 
-	soup = BeautifulSoup(page, 'html.parser') 
-	anchors = soup.find_all('a')
-	candidate_links = []
-	for anchor in anchors:
-		link = str(anchor.get('href'))
-		pattern = r'^/r/photoshopbattles/comments/'
+    soup = BeautifulSoup(page, 'html.parser') 
+    anchors = soup.find_all('a')
+    candidate_links = []
+    for anchor in anchors:
+        link = str(anchor.get('href'))
+        pattern = r'^/r/photoshopbattles/comments/'
 
-		if (re.search(pattern, link) and re.search(r'psbattle', link)):
-			candidate_links.append(link)
-	return list(set(candidate_links))
+        if (re.search(pattern, link) and re.search(r'psbattle', link)):
+           
+            candidate_links.append(f"https://reddit.com{link}")
+    return list(set(candidate_links))
 
 # %%
 # take a candidate link and get all the photoshopped links
@@ -61,25 +62,11 @@ def get_actual_images(page):
 import requests
 from PIL import Image
 from io import BytesIO
-def save_image(url):
-    filename = "processing_queue/" +  str(url).replace("https://","").replace("/", "&#") + ".jpg"
-    response = requests.get(url)
-    if response.status_code == 200:
-        # Open the image using Pillow
-        img = Image.open(BytesIO(response.content))
-
-        # Save the image as JPEG
-        try:
-            img.convert('RGB').save(filename, "JPEG")
-        except Exception as e:
-            print(f"there was an issue saving {filename}")
-            print(e)
-            return
-        print(f"Image saved as {filename}")
+def save_image(classification, url):
+    sc.save_image(classification, url)
         
-def save_images(urls):
-    for url in urls:
-        save_image(url)
+def save_images(classification, urls):
+    sc.save_images(classification, url)
 #%%
 # just a utility
 import secrets
