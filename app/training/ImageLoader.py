@@ -12,6 +12,9 @@ import matplotlib.pyplot as plt
 class ImageLoader:
     __data_dir = ""
     __purpose = ""
+    __batch_size = 32
+    __img_height = 180
+    __img_width = 180
     def __init__(self, archive):
         self.__purpose = "to pass the sugar"
         self.__data_dir = pathlib.Path(archive).with_suffix('')
@@ -30,17 +33,13 @@ class ImageLoader:
 
     # This loads the image into tensorflow. audio loading also exists.
     def load(self):
-        batch_size = 32
-        img_height = 180
-        img_width = 180
-
         self.__training_dataset = tf.keras.utils.image_dataset_from_directory(
             self.__data_dir,
             validation_split=0.2,
             subset="training",
             seed=123,
-            image_size=(img_height, img_width),
-            batch_size=batch_size)
+            image_size=(self.__img_height, self.__img_width),
+            batch_size=self.__batch_size)
         self.__class_names = self.__training_dataset.class_names
 
         self.__validation_dataset = tf.keras.utils.image_dataset_from_directory(
@@ -48,14 +47,22 @@ class ImageLoader:
             validation_split=0.2,
             subset="validation",
             seed=123,
-            image_size=(img_height, img_width),
-            batch_size=batch_size)
-        
+            image_size=(self.__img_height, self.__img_width),
+            batch_size=self.__batch_size)
         print("finished loading validation and training dataset with classes: " + str(self.__class_names))
     
-    def visualize(self):
+    def load_test_data(self, test_data_directory):
+            self.__test_dataset = tf.keras.utils.image_dataset_from_directory(
+            test_data_directory,
+            validation_split=0.2,
+            subset="testing",
+            seed=123,
+            image_size=(self.__img_height, self.__img_width),
+            batch_size=self.__batch_size)
+            
+    def visualize(self, dataset):
         plt.figure(figsize=(10, 10))
-        for images, labels in self.__training_dataset.take(1):
+        for images, labels in dataset.take(1):
             for i in range(9):
                 ax = plt.subplot(3, 3, i + 1)
                 showImage = plt.imshow(images[i].numpy().astype("uint8"))

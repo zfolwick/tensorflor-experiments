@@ -1,0 +1,1 @@
+Image scraper scrapes images from the web according to a certain expectations, then outputs them to the directory called "processing_queue". This allows a human to move them to the expected directory.

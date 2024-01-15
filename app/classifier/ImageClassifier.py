@@ -6,6 +6,7 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 import pathlib
 import matplotlib.pyplot as plt
+from PIL import Image
 
 # The image classifier is where the model is used for the classification of new images.
 class ImageClassifier:
@@ -17,29 +18,33 @@ class ImageClassifier:
 
     def purpose(self):
         print(self.__purpose)
-        
-    def classify(self, image):
-        # method 2: model + softmax
-        probability_model = tf.keras.models.Sequential([
-            self.__model,
-            tf.keras.layers.Softmax()
-        ])
-        predictions = probability_model(image)
-        pred0 = predictions[0]
-        self.print_to_console(pred0)
+    
+    def predict(self, filename, fullpath):
+        path = tf.keras.utils.get_file(
+            filename, "file:\\\\" + fullpath
+            )
+        print(path)
 
-        self.display_image(pred0, image)
+        img = tf.keras.utils.load_img(
+            path,
+            target_size=(180, 180)
+        )
+        img_array = tf.keras.utils.img_to_array(img)
+        img_array = tf.expand_dims(img_array, 0) # Create a batch
         
-    def print_to_console(self, tensor_to_print):
-        print("######")
-        print(self.__class_names)
-        print(tensor_to_print.numpy())
+        predictions = self.__model.predict(img_array)
+        score = tf.nn.softmax(predictions[0])
+        class_name = self.__class_names[np.argmax(score)]
+        self.print_to_console(class_name, score)
+        self.display_image(path)
 
-        label0 = np.argmax(tensor_to_print)
-        print(self.__class_names[label0])
-        print("#####")
         
-    # display with jupyter notebook
-    def display_image(self, tensor_to_print, image):
-        tensor = np.array(image, dtype=np.uint8)
-        plt.imshow(tensor[0]) 
+    def print_to_console(self, class_name, score):
+        print(
+            "This image most likely belongs to {} with a {:.2f} percent confidence."
+            .format(class_name, 100 * np.max(score))
+        )
+        
+    def display_image(self, filepath):
+        img = Image.open(filepath)
+        plt.imshow(img)
