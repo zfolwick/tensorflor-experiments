@@ -39,11 +39,14 @@ def get_modified_images(url):
 
 #%%
 # persist the images from a given url to disk under a filename
-def save_image(classification, url):
-    sc.save_image(classification, url)
+def save_original_image(originalCount, url):
+    sc.save_original_image(originalCount, url)
         
-def save_images(classification, urls):
-    sc.save_images(classification, urls)
+def save_image(classification, originalCount, url):
+    sc.save_image(classification, originalCount, url)
+        
+def save_images(classification, originalCount, urls):
+    sc.save_images(classification, originalCount, urls)
 #%%
 # just a utility
 import secrets
