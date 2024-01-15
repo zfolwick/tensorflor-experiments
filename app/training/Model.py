@@ -29,8 +29,8 @@ class Model:
             loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
             metrics=['accuracy'])
         
-        batch_size=64 # how many pics at once?
-        epochs=5   
+        batch_size=4 # how many pics at once?
+        epochs=15  
              
         for image, label in self.__training_set:
             self.__training_images = image
