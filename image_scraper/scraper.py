@@ -41,9 +41,16 @@ def formatForFs(url):
 import requests
 from PIL import Image
 from io import BytesIO
-def save_image(classification, url):
+import os
+def save_image(classification, originalCounter, url):
     print(url)
-    filename = f"processing_queue/{classification}/" + formatForFs(url) + ".jpg"
+    dirname = f"processing_queue/{classification}/{originalCounter}"
+    isExist = os.path.exists(dirname)
+    if not isExist:
+       # Create a new directory because it does not exist
+       os.makedirs(dirname)
+    filename = f"{dirname}/" + formatForFs(url) + ".jpg"
+    print(f"Saving file {filename}")
     response = requests.get(url)
     if response.status_code == 200:
         # Open the image using Pillow
@@ -58,9 +65,31 @@ def save_image(classification, url):
             return
         print(f"Image saved as {filename}")
         
-def save_images(classification, urls):
+def save_original_image(originalCounter, url):
+    dirname = f"processing_queue/original"
+    isExist = os.path.exists(dirname)
+    if not isExist:
+       # Create a new directory because it does not exist
+       os.makedirs(dirname)
+    filename = f"{dirname}/{originalCounter}.jpg"
+    print(f"Saving file {filename}")
+    response = requests.get(url)
+    if response.status_code == 200:
+        # Open the image using Pillow
+        try:
+            img = Image.open(BytesIO(response.content))
+            # Save the image as JPEG
+            img.convert('RGB').save(filename, "JPEG")
+        except Exception as e:
+            print(f"there was an issue saving {filename}")
+            print(f"the source url is: {url}")
+            print(e)
+            return
+        print(f"Image saved as {filename}")
+        
+def save_images(classification, originalCounter, urls):
     for url in urls:
-        save_image(classification, url)
+        save_image(classification, originalCounter, url)
 #%%
 # just a utility
 import secrets

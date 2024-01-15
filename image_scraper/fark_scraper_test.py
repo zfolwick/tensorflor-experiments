@@ -23,7 +23,9 @@ for original,modded_links in list_of_modified_image_links.items():
     
 #%%
 #from the list of possibly modded links, get the actual image, and not a page with other stuff on it.
+imageCounter = 0
 for original, modded_links in list_of_modified_image_links.items():
     print("getting images for " + original)                                                             
-    fs.save_image("original", original)
-    fs.save_images("modified", modded_links)
+    fs.save_original_image(imageCounter, original)
+    fs.save_images("modified", imageCounter, modded_links)
+    imageCounter += 1
