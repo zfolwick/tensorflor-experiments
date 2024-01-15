@@ -37,6 +37,7 @@ class ImageClassifier:
         class_name = self.__class_names[np.argmax(score)]
         self.print_to_console(class_name, score)
         self.display_image(path)
+        return score
 
         
     def print_to_console(self, class_name, score):

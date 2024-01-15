@@ -23,21 +23,32 @@ print("Completed writing model to disk!")
 import tensorflow as tf
 # load model
 loaded_model = tf.keras.models.load_model("my_first_model")
-loaded_model.summary()
-#%%
+# loaded_model.summary()
+##%%
 ############################
 #### the actual product ####
 ############################
 import app.classifier.ImageClassifier as ic
 
 # create the classifier
-classes = images.get_classes() # should dynamically get this from the model.
+classes = ["modified", "original"] # should dynamically get this from the model.
 classifier = ic.ImageClassifier(loaded_model, classes)
-#%%
+##%%
 # give it an image
-filename = "chocolate.jpg"
+filename = "sitting-monkey.JPG"
 test_image_path = os.path.join("test_images", filename)
 fullpath = os.path.abspath(test_image_path)
 # get a prediction
-classifier.predict(filename, fullpath)
+score = classifier.predict(filename, fullpath)
+
+predictionResult = (fullpath, score)
+## %%
+#########################################################################################
+#### Now we have a probability that something is or is not modified.                 ####
+#### This goes into a queue for further humana (and eventually automated) processing.####
+#########################################################################################
+import app.classifier.PredictionResultHandler as prh
+predictionResultHandler = prh.PredictionResultHandler()
+
+predictionResultHandler.handle(predictionResult)
 # %%
