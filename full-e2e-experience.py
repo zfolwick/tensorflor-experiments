@@ -3,15 +3,30 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # load the training dataset
 import app.training.ImageLoader as ld
-images = ld.ImageLoader("./image-library")
+image_ds = "~/.certifyai/Columbia_ds"
+images = ld.ImageLoader(os.path.expanduser(image_ds))
 images.load()
+
+####
+# QA step for loading images:
+#%%
+images.visualize(images.get_training_dataset())
+
+
 
 #%%
 # train the model
 import app.training.Model as m
-model = m.Model(images.get_training_dataset(), images.get_validation_dataset())
+from keras.applications import ResNet50
+model = m.Model()
+training_set = images.get_training_dataset()
+validation_set = images.get_validation_dataset()
+model.set_dataset(training_set, validation_set)
+resNet_model = ResNet50(weights=None, include_top=False, input_shape=(1200, 1200, 3))
+model.set_base(base_model=resNet_model)
 tuned_model = model.train()
-
+print(tuned_model.summary())
+tf.keras.utils.plot_model(tuned_model, show_shapes=True)
 # persist the model
 tuned_model.save("my_first_model")
 print("Completed writing model to disk!")
@@ -24,7 +39,9 @@ import tensorflow as tf
 # load model
 loaded_model = tf.keras.models.load_model("my_first_model")
 # loaded_model.summary()
-##%%
+
+
+#%%
 ############################
 #### the actual product ####
 ############################
@@ -32,17 +49,26 @@ import app.classifier.ImageClassifier as ic
 
 # create the classifier
 classes = ["modified", "original"] # should dynamically get this from the model.
-classifier = ic.ImageClassifier(loaded_model, classes)
-##%%
+classifier = ic.ImageClassifier(tuned_model, classes)
+#%%
+def predict(filename):
+    test_image_path = os.path.join("test_images", filename)
+    fullpath = os.path.abspath(test_image_path)
+    # get a prediction
+    score = classifier.predict(filename, fullpath)
+    predictionResult = (fullpath, score)
+#%%
 # give it an image
-filename = "sitting-monkey.JPG"
-test_image_path = os.path.join("test_images", filename)
-fullpath = os.path.abspath(test_image_path)
-# get a prediction
-score = classifier.predict(filename, fullpath)
+sitting_monkey_celeb = "sitting-monkey-celebs.JPG"
+predict(sitting_monkey_celeb)
+shawn = "shawn.jpg"
+# predict(shawn)
+deepfake = "deepfake.jpg"
+# predict(deepfake)
+# predict("sitting-monkey.JPG")
 
-predictionResult = (fullpath, score)
-## %%
+
+# %%
 #########################################################################################
 #### Now we have a probability that something is or is not modified.                 ####
 #### This goes into a queue for further humana (and eventually automated) processing.####

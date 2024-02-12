@@ -13,12 +13,12 @@ class ImageLoader:
     __data_dir = ""
     __purpose = ""
     __batch_size = 32
-    __img_height = 180
-    __img_width = 180
+    __img_height = 1200
+    __img_width = 1200
     def __init__(self, archive):
         self.__purpose = "to pass the sugar"
         self.__data_dir = pathlib.Path(archive).with_suffix('')
-        image_count = len(list(self.__data_dir.glob('*/*.jpg'))) # this might be the only thing tying us to images.
+        image_count = len(list(self.__data_dir.glob('*/*.jpeg'))) # this might be the only thing tying us to images.
         print("loaded " + str(image_count) + " images")
     
     def purpose(self):
