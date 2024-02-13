@@ -35,7 +35,7 @@ class Model:
         self.__training_set = training_set
         self.__validation_set = validation_set
         
-    def train(self):
+    def train(self, batch_size, epochs):
         num_classes = 2
         model = self.create(num_classes=num_classes, base_model=self.__model)
 
@@ -44,8 +44,8 @@ class Model:
             loss=tf.keras.losses.BinaryCrossentropy(),
             metrics=['accuracy'])
         
-        batch_size=10 # how many pics at once?
-        epochs=8 
+        # batch_size=10 # how many pics at once?
+        # epochs=8 
              
         for image, label in self.__training_set:
             self.__training_images = image
@@ -78,25 +78,28 @@ class Model:
         # # Load the pre-trained ResNet50 model without the top layers
 
         # # Freeze the layers in the base model (optional)
-        for layer in base_model.layers:
-            layer.trainable = False
+        if base_model is not None:
+            for layer in base_model.layers:
+                layer.trainable = False
         
         to_res = (1200, 1200)
         model = tf.keras.Sequential()
         model.add(tf.keras.layers.Lambda(lambda image: tf.image.resize(image, to_res)))
-        model.add(base_model)
-        model.add(Flatten())
+        if base_model is not None:
+            model.add(base_model)
         model.add(tf.keras.layers.Flatten())
-        model.add(tf.keras.layers.BatchNormalization())
-        model.add(tf.keras.layers.Dense(256, activation='relu'))
-        model.add(tf.keras.layers.Dropout(0.5))
-        model.add(tf.keras.layers.BatchNormalization())
-        model.add(tf.keras.layers.Dense(128, activation='relu'))
-        model.add(tf.keras.layers.Dropout(0.5))
-        model.add(tf.keras.layers.BatchNormalization())
-        model.add(tf.keras.layers.Dense(64, activation='relu'))
-        model.add(tf.keras.layers.Dropout(0.5))
-        model.add(tf.keras.layers.BatchNormalization())
+        # model.add(tf.keras.layers.BatchNormalization())
+        model.add(tf.keras.layers.Dense(512, activation='relu'))
+        # model.add(tf.keras.layers.Dropout(0.5))
+        # model.add(tf.keras.layers.Dense(256, activation='relu'))
+        # model.add(tf.keras.layers.Dropout(0.5))
+        # model.add(tf.keras.layers.BatchNormalization())
+        # model.add(tf.keras.layers.Dense(128, activation='relu'))
+        # model.add(tf.keras.layers.Dropout(0.5))
+        # model.add(tf.keras.layers.BatchNormalization())
+        # model.add(tf.keras.layers.Dense(64, activation='relu'))
+        # model.add(tf.keras.layers.Dropout(0.5))
+        # model.add(tf.keras.layers.BatchNormalization())
         model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
             
         return model

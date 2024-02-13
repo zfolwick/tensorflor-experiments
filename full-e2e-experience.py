@@ -24,7 +24,15 @@ validation_set = images.get_validation_dataset()
 model.set_dataset(training_set, validation_set)
 resNet_model = ResNet50(weights=None, include_top=False, input_shape=(1200, 1200, 3))
 model.set_base(base_model=resNet_model)
-tuned_model = model.train()
+batch_size = 16
+epochs = 8
+tuned_model = model.train(batch_size, epochs)
+
+#%%
+#####################
+### Plot model
+#######################
+import tensorflow as tf
 print(tuned_model.summary())
 tf.keras.utils.plot_model(tuned_model, show_shapes=True)
 # persist the model
@@ -60,9 +68,9 @@ def predict(filename):
 #%%
 # give it an image
 sitting_monkey_celeb = "sitting-monkey-celebs.JPG"
-predict(sitting_monkey_celeb)
+# predict(sitting_monkey_celeb)
 shawn = "shawn.jpg"
-# predict(shawn)
+predict(shawn)
 deepfake = "deepfake.jpg"
 # predict(deepfake)
 # predict("sitting-monkey.JPG")
