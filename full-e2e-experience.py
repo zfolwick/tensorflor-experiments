@@ -24,14 +24,16 @@ validation_set = images.get_validation_dataset()
 model.set_dataset(training_set, validation_set)
 resNet_model = ResNet50(weights=None, include_top=False, input_shape=(1200, 1200, 3))
 model.set_base(base_model=resNet_model)
-batch_size = 16
+batch_size = 10
 epochs = 8
-tuned_model = model.train(batch_size, epochs)
+learning_rate = 1e-4
+tuned_model = model.train(batch_size, epochs, learning_rate=learning_rate)
 
 #%%
 #####################
 ### Plot model
 #######################
+print(model.get_history().history)
 import tensorflow as tf
 print(tuned_model.summary())
 tf.keras.utils.plot_model(tuned_model, show_shapes=True)

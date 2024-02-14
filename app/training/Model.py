@@ -21,6 +21,7 @@ class Model:
         self.__model = None
         self.__training_set = None
         self.__validation_set = None
+        self.__history = None
         self.__purpose = "Create the model from a dataset and train it."
         self.purpose()
         
@@ -35,12 +36,13 @@ class Model:
         self.__training_set = training_set
         self.__validation_set = validation_set
         
-    def train(self, batch_size, epochs):
+    def train(self, batch_size, epochs, learning_rate):
         num_classes = 2
         model = self.create(num_classes=num_classes, base_model=self.__model)
 
+        optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
         model.compile(
-            optimizer='adam',
+            optimizer=optimizer,
             loss=tf.keras.losses.BinaryCrossentropy(),
             metrics=['accuracy'])
         
@@ -68,8 +70,8 @@ class Model:
         # plt.title('Training and Validation Accuracy')
         # plt.legend()
         # plt.show()
-
-        model.evaluate(self.__training_images, training_labels, batch_size=batch_size, verbose=2)
+        self.__history = history     
+        model.evaluate(self.__validation_set, training_labels, batch_size=batch_size, verbose=2)
         
         return model
 
@@ -104,7 +106,8 @@ class Model:
             
         return model
         
-
+    def get_history(self):
+        return self.__history.history
     
     def get_training_images_tensor(self):
         return self.__training_images
