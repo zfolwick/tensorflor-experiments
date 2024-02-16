@@ -12,17 +12,27 @@ images.load()
 #%%
 images.visualize(images.get_training_dataset())
 
+#%%
 
 
 #%%
 # train the model
 import app.training.Model as m
 from keras.applications import ResNet50
+from keras.layers import Input
+
+image_input=Input(shape=(1200, 1200, 3))
 model = m.Model()
 training_set = images.get_training_dataset()
 validation_set = images.get_validation_dataset()
 model.set_dataset(training_set, validation_set)
-resNet_model = ResNet50(weights=None, include_top=False, input_shape=(1200, 1200, 3))
+resNet_model = ResNet50(include_top=False, 
+                        weights='imagenet',
+                        input_tensor=image_input,
+                        input_shape=(1200, 1200, 3),
+                        classes=2)
+print(resNet_model.summary())
+#%%
 model.set_base(base_model=resNet_model)
 batch_size = 10
 epochs = 8

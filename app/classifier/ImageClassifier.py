@@ -11,10 +11,12 @@ from PIL import Image
 # The image classifier is where the model is used for the classification of new images.
 class ImageClassifier:
     __purpose = ""
-    def __init__(self, model, class_names):
+    def __init__(self, model, class_names, img_height, img_width):
         self.__purpose = "decide whether an image is modified or not."
         self.__model = model
         self.__class_names = class_names
+        self.__img_height = img_height
+        self.__img_width = img_width
 
     def purpose(self):
         print(self.__purpose)
@@ -27,7 +29,7 @@ class ImageClassifier:
 
         img = tf.keras.utils.load_img(
             path,
-            target_size=(1200, 1200)
+            target_size=(self.__img_height, self.__img_width)
         )
         img_array = tf.keras.utils.img_to_array(img)
         img_array = tf.expand_dims(img_array, 0) # Create a batch
@@ -35,8 +37,9 @@ class ImageClassifier:
         predictions = self.__model.predict(img_array)
         score = tf.nn.softmax(predictions[0])
         class_name = self.__class_names[np.argmax(score)]
+        # TODO: get rid of print_to_console and display_image
         self.print_to_console(class_name, score)
-        self.display_image(path)
+        # self.display_image(path)
         return score
 
         
