@@ -50,9 +50,10 @@ expected_label = y_test[2]
 print(img)
 print(img.shape)
 # %%
-from matplotlib import pyplot as plt
-plt.imshow(img, interpolation='nearest')
-plt.show()
+# UNCOMMENT IF YOU WANT TO SEE THIS, OTHERWISE IT'LL STOP THE PROGRAM
+# from matplotlib import pyplot as plt
+# plt.imshow(img, interpolation='nearest')
+# plt.show()
 # %%
 # actually use the model
 import numpy as np
