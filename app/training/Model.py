@@ -91,7 +91,7 @@ class Model:
             model.add(base_model)
         model.add(tf.keras.layers.Flatten())
         # model.add(tf.keras.layers.BatchNormalization())
-        model.add(tf.keras.layers.Conv2D(512, kernel_size=(3, 3), kernel_initializer=LecunNormal(), activation='selu', input_shape=(1200,1200,3)))
+        model.add(tf.keras.layers.Conv2D(512, kernel_size=(3, 3), kernel_initializer=LecunNormal(), activation='selu', input_shape=(1200, 1200, 3)))
         # model.add(tf.keras.layers.Dropout(0.5))
         # model.add(tf.keras.layers.Dense(256, activation='relu'))
         # model.add(tf.keras.layers.Dropout(0.5))

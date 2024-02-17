@@ -6,7 +6,7 @@ import tensorflow as tflow
 from keras.layers import Dense, Conv2D, Flatten
 from keras.models import Sequential
 from keras.optimizers import Adam
-from keras.initializers import LecunNormal
+from keras.initializers import LecunUniform
 # %%
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -22,7 +22,7 @@ images.get_image_count()
 #%%
 ##### Train model using transfer learning
 import keras.models as Model
-from keras.layers import Reshape, UpSampling2D, GlobalAveragePooling2D
+from keras.layers import Reshape, UpSampling2D, BatchNormalization, GlobalAveragePooling2D, Activation
 
 demo_resnet_model = Sequential()
 
@@ -38,43 +38,66 @@ for each_layer in pretrained_model_for_demo.layers:
 ### the model
 demo_resnet_model.add(pretrained_model_for_demo)
 demo_resnet_model.add(Reshape((4, 4, 128)))  # Reshape the output to a 4D tensor
-demo_resnet_model.add(UpSampling2D(size=(2, 2)))  # Upsample the output to increase its spatial dimensions
-demo_resnet_model.add(Conv2D(filters=2048, 
-                             kernel_size=(7, 7), 
-                             activation='selu', 
-                             kernel_initializer=LecunNormal(),
-                             )
-                      )
-demo_resnet_model.add(GlobalAveragePooling2D())
-# demo_resnet_model.add(Conv2D(1024, 
-#                              (1, 1), 
+# demo_resnet_model.add(UpSampling2D(size=(2, 2)))  # Upsample the output to increase its spatial dimensions
+
+# demo_resnet_model.add(BatchNormalization())
+# demo_resnet_model.add(Activation('selu'))
+# demo_resnet_model.add(Dense(units=2048, use_bias=False))
+
+# demo_resnet_model.add(BatchNormalization())
+# demo_resnet_model.add(Activation('selu'))
+# demo_resnet_model.add(Dense(units=512, use_bias=False))
+
+# demo_resnet_model.add(BatchNormalization())
+# demo_resnet_model.add(Activation('selu'))
+# demo_resnet_model.add(Dense(units=128, use_bias=False))
+
+# demo_resnet_model.add(BatchNormalization())
+# demo_resnet_model.add(Activation('selu'))
+# demo_resnet_model.add(Dense(units=64, use_bias=False))
+
+
+# demo_resnet_model.add(Conv2D(filters=256, 
+#                              kernel_size=(3, 3), 
 #                              activation='selu', 
-#                              kernel_initializer=LecunNormal())
+#                              kernel_initializer=LecunUniform(),
+#                              )
 #                       )
-# demo_resnet_model.add(Conv2D(512, 
-#                              (1, 1), 
-#                              activation='selu', 
-#                              kernel_initializer=LecunNormal())
-#                       )
+# demo_resnet_model.add(GlobalAveragePooling2D())
+
+# demo_resnet_model.add(GlobalAveragePooling2D())
 # demo_resnet_model.add(Conv2D(256, 
 #                              (1, 1), 
 #                              activation='selu', 
 #                              kernel_initializer=LecunNormal())
 #                       )
-# demo_resnet_model.add(Dense(units=128,
-#                             activation='selu',
-#                             kernel_initializer=LecunNormal())
-#                       )
+demo_resnet_model.add(Dense(units=2048,
+                            activation='selu',
+                            kernel_initializer=LecunUniform())
+                      )
+demo_resnet_model.add(Dense(units=512,
+                            activation='selu',
+                            kernel_initializer=LecunUniform())
+                      )
+demo_resnet_model.add(Dense(units=128,
+                            activation='selu',
+                            kernel_initializer=LecunUniform())
+                      )
+demo_resnet_model.add(Dense(units=64,
+                            activation='selu',
+                            kernel_initializer=LecunUniform())
+                      )
 demo_resnet_model.add(Flatten())
-demo_resnet_model.add(Dense(2, activation='softmax'))
+demo_resnet_model.add(Dense(1, activation='sigmoid'))
+# demo_resnet_model.add(Dense(2, activation='softmax'))
 
 learning_rate = 1e-5
-demo_resnet_model.compile(optimizer=Adam(learning_rate=learning_rate),
-                        #   loss='binary_crossentropy',
-                          loss='sparse_categorical_crossentropy',
+demo_resnet_model.compile(optimizer=Adam(learning_rate=learning_rate,),
+                          loss='binary_crossentropy',
+                          # loss='sparse_categorical_crossentropy',
                           metrics=['accuracy'])
 
-epochs=10
+epochs=30
 history = demo_resnet_model.fit(images.get_training_dataset(), 
                                 validation_data=images.get_validation_dataset(), 
                                 epochs=epochs
@@ -95,13 +118,26 @@ plotter_lib.xlabel('Epochs')
 plotter_lib.legend(['train', 'validation'])
 plotter_lib.show()
 
+#### Plot the learning model
+print(history.history)
+plotter_lib.figure(figsize=(8, 8))
+epochs_range= range(epochs)
+plotter_lib.plot( epochs_range, history.history['loss'], label="Training Loss")
+plotter_lib.plot(epochs_range, history.history['val_loss'], label="Validation Loss")
+plotter_lib.axis(ymin=0.4,ymax=1)
+plotter_lib.grid()
+plotter_lib.title('Model Loss')
+plotter_lib.ylabel('Loss')
+plotter_lib.xlabel('Epochs')
+plotter_lib.legend(['train', 'validation'])
+plotter_lib.show()
 
 # %%        
 ### Does not work
 for image, label in images.get_training_dataset():
             training_labels = label
 
-batch_size = 10
+batch_size = 30
 demo_resnet_model.evaluate(images.get_validation_dataset(), training_labels, batch_size=batch_size, verbose=2)
 
 
