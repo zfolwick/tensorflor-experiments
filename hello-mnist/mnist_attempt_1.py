@@ -1,4 +1,14 @@
-# This takes the mnist dataset and performs an image classification.  This is the "Hello World!" of the machine learning world.
+# This takes the mnist dataset and performs an image classification.  This is the "Hello World!" of the machine learning world.  The below script represents the core of the e2e workflow.
+
+# This can be run either as a jupyter notebook or in terminal via python ./mnist_attempt_1.py
+# to adjust, scroll down to the banner below:
+
+#  #################################
+#  #### Testing
+#  #################################
+#
+# and adjust the index of the x_test array.
+#
 #%%
 import tensorflow as tf
 
@@ -28,10 +38,11 @@ model.compile(optimizer='adam',
 model.fit(x_train, y_train, epochs=5)
 model.evaluate(x_test,  y_test, verbose=2)
 
-
+#################################
 #### Testing
+#################################
 # %%
-## data selection
+## human testing data selection
 img = x_test[2]
 expected_label = y_test[2]
 #%%
