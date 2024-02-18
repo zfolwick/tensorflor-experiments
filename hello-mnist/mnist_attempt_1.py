@@ -11,7 +11,7 @@
 #
 #%%
 import tensorflow as tf
-
+#%%
 # data selection
 mnist = tf.keras.datasets.mnist
 
@@ -45,15 +45,35 @@ model.evaluate(x_test,  y_test, verbose=2)
 ## human testing data selection
 img = x_test[2]
 expected_label = y_test[2]
+# import os
+# import numpy as np
+# filename = "CG-7.jpg"
+# # test_image_path = os.path.join("test_images", filename)
+# fullpath = os.path.abspath(filename)
+# path = tf.keras.utils.get_file(
+#             filename, "file:\\\\" + fullpath
+#             )
+# raw_img = tf.keras.utils.load_img(
+#             path,
+#             grayscale=True,
+#             target_size=(28, 28)
+#         )
+# img_array = tf.keras.utils.img_to_array(raw_img)
+# print("##########################")
+# print(img_array.shape)
+# print("##########################")
+
+# img = tf.expand_dims(img_array, 0)[0] # Create a batch
+# expected_label = 'CG'
 #%%
 # human readable
 print(img)
 print(img.shape)
 # %%
 # UNCOMMENT IF YOU WANT TO SEE THIS, OTHERWISE IT'LL STOP THE PROGRAM
-# from matplotlib import pyplot as plt
-# plt.imshow(img, interpolation='nearest')
-# plt.show()
+from matplotlib import pyplot as plt
+plt.imshow(img, interpolation='nearest')
+plt.show()
 # %%
 # actually use the model
 import numpy as np
