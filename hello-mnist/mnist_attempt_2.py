@@ -16,11 +16,11 @@ import tensorflow as tf
 mnist = tf.keras.datasets.mnist
 
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
-print(x_test[0])
+
 #normalize
 x_train, x_test = x_train / 255.0, x_test / 255.0
-#%%
-# create architecture
+
+#train
 model = tf.keras.models.Sequential([
   tf.keras.layers.Flatten(input_shape=(28, 28)),
   tf.keras.layers.Dense(128, activation='relu'),
@@ -35,7 +35,7 @@ model.compile(optimizer='adam',
               loss=loss_fn,
               metrics=['accuracy'])
 
-model.fit(x_train, y_train, epochs=15)
+model.fit(x_train, y_train, epochs=5)
 model.evaluate(x_test,  y_test, verbose=2)
 
 #################################
@@ -43,35 +43,30 @@ model.evaluate(x_test,  y_test, verbose=2)
 #################################
 # %%
 ## human testing data selection
-img = x_test[1]
-expected_label = y_test[1]
-print(img)
-#%%
-# custom data
-import os
-import numpy as np
-filename = "CG-1.jpg"
-# test_image_path = os.path.join("test_images", filename)
-fullpath = os.path.abspath(filename)
-path = tf.keras.utils.get_file(
-            filename, "file:\\\\" + fullpath
-            )
-raw_img = tf.keras.utils.load_img(
-            path,
-            grayscale=True,
-            target_size=(28, 28)
-        )
-img_array = tf.keras.utils.img_to_array(raw_img)
-print("##########################")
-print(img_array)
-print("##########################")
-img = tf.expand_dims(img_array, 0)[0] # Create a batch
-expected_label = 'CG'
+img = x_test[2]
+expected_label = y_test[2]
+# import os
+# import numpy as np
+# filename = "CG-7.jpg"
+# # test_image_path = os.path.join("test_images", filename)
+# fullpath = os.path.abspath(filename)
+# path = tf.keras.utils.get_file(
+#             filename, "file:\\\\" + fullpath
+#             )
+# raw_img = tf.keras.utils.load_img(
+#             path,
+#             grayscale=True,
+#             target_size=(28, 28)
+#         )
+# img_array = tf.keras.utils.img_to_array(raw_img)
+# print("##########################")
+# print(img_array.shape)
+# print("##########################")
+
+# img = tf.expand_dims(img_array, 0)[0] # Create a batch
+# expected_label = 'CG'
 #%%
 # human readable
-# print(img)
-img = tf.reshape(img, (28, 28))
-img = tf.cast(img, dtype=tf.float64)
 print(img)
 print(img.shape)
 # %%
@@ -86,7 +81,6 @@ img_array = tf.keras.utils.img_to_array(img)
 img_array = tf.expand_dims(img_array, 0) # Create a batch
 
 predictions = model.predict(img_array)
-print(predictions)
 score = tf.nn.softmax(predictions[0])
 
 #assert
