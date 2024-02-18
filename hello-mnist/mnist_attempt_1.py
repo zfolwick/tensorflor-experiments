@@ -50,11 +50,12 @@ print(img)
 # custom data
 import os
 import numpy as np
-filename = "CG-1.jpg"
+np.set_printoptions(linewidth=180)
+filename = "Red/CG-0.jpg"
 # test_image_path = os.path.join("test_images", filename)
 fullpath = os.path.abspath(filename)
 path = tf.keras.utils.get_file(
-            filename, "file:\\\\" + fullpath
+            filename, "file://" + fullpath
             )
 raw_img = tf.keras.utils.load_img(
             path,
