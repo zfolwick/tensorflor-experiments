@@ -106,7 +106,7 @@ def test_jpg(filename, expected_value):
   equal = np.argmax(predictions) == expected_value
 
   print(f'predicted value: {str(np.argmax(predictions))} : expected: {str(expected_value)} : equal: {str(equal)}')
-  show_img(img=img_array)
+  # show_img(img=img_array) # uncomment this if you run as a jupyter notebook
   return 1 if equal else 0
 
 def test_digits(directory_name, extension):
