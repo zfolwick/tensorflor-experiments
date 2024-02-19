@@ -10,80 +10,123 @@
 # and adjust the index of the x_test array.
 #
 #%%
+# CREATE MODEL AND TRAIN
 import tensorflow as tf
+
+def data_selection():
+  mnist = tf.keras.datasets.mnist
+  (x_train, y_train), (x_test, y_test) = mnist.load_data()
+  #normalize
+  x_train, x_test = x_train / 255.0, x_test / 255.0
+  return (x_train, y_train), (x_test, y_test) 
+
+def create_model(test, train, labels):
+  model = tf.keras.models.Sequential([
+    tf.keras.layers.Flatten(input_shape=(28, 28)),
+    tf.keras.layers.Dense(128, activation='relu'),
+    tf.keras.layers.Dropout(0.2),
+    tf.keras.layers.Dense(10),
+    tf.keras.layers.Softmax()
+  ])
+
+  loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+  model.compile(optimizer='adam',
+                loss=loss_fn,
+                metrics=['accuracy'])
+
+  model.fit(train, labels, epochs=5)
+  model.evaluate(test,  labels, verbose=2)
+  
+  return model
+
+
+
+
+
 #%%
-# data selection
-mnist = tf.keras.datasets.mnist
+#################################
+#### Testing Library
+#################################
+import os
+import numpy as np
+from matplotlib import pyplot as plt
+np.set_printoptions(linewidth=180)
+## human testing data selection
+def use_data_from_training_set(index):
+  img = x_test[index]
+  expected_label = y_test[index]
+  return img, expected_label
 
-(x_train, y_train), (x_test, y_test) = mnist.load_data()
 
-#normalize
-x_train, x_test = x_train / 255.0, x_test / 255.0
+def get_data_from_file(filename, label):
+  fullpath = os.path.abspath(filename)
+  # path = tf.keras.utils.get_file(
+  #           filename, "file://" + fullpath
+  #           )
+  raw_img = tf.keras.utils.load_img(
+              fullpath,
+              grayscale=True,
+              target_size=(28, 28)
+          )
+  img_array = tf.keras.utils.img_to_array(raw_img)
+  img = tf.expand_dims(img_array, 0)[0] # Create a batch
+  return img
 
-#train
-model = tf.keras.models.Sequential([
-  tf.keras.layers.Flatten(input_shape=(28, 28)),
-  tf.keras.layers.Dense(128, activation='relu'),
-  tf.keras.layers.Dropout(0.2),
-  tf.keras.layers.Dense(10),
-  tf.keras.layers.Softmax()
-])
+# UNCOMMENT IF YOU WANT TO SEE THIS, OTHERWISE IT'LL STOP THE PROGRAM
+def show_img(img):
+  img = tf.reshape(img, (28, 28))
+  img = tf.cast(img, dtype=tf.float64)
+  print(img)
+  img_array = tf.keras.utils.img_to_array(img)
+  img = tf.expand_dims(img_array, 0)[0] # Create a batch
+  plt.imshow(img, interpolation='nearest')
+  plt.show()
 
-# create model
-loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-model.compile(optimizer='adam',
-              loss=loss_fn,
-              metrics=['accuracy'])
+def predict(model, img_array):
+  img_array = tf.expand_dims(img_array, 0) # Create a batch
+  predictions = model.predict(img_array, verbose=None)
+  score = tf.nn.softmax(predictions[0])
+  # print(score)
+  return predictions
+#%%
 
-model.fit(x_train, y_train, epochs=5)
-model.evaluate(x_test,  y_test, verbose=2)
+
+(x_train, y_train), (x_test, y_test) = data_selection()
+model = create_model(x_test, x_test, y_test)
 
 #################################
 #### Testing
 #################################
-# %%
-## human testing data selection
-img = x_test[2]
-expected_label = y_test[2]
-# import os
-# import numpy as np
-# filename = "CG-7.jpg"
-# # test_image_path = os.path.join("test_images", filename)
-# fullpath = os.path.abspath(filename)
-# path = tf.keras.utils.get_file(
-#             filename, "file:\\\\" + fullpath
-#             )
-# raw_img = tf.keras.utils.load_img(
-#             path,
-#             grayscale=True,
-#             target_size=(28, 28)
-#         )
-# img_array = tf.keras.utils.img_to_array(raw_img)
-# print("##########################")
-# print(img_array.shape)
-# print("##########################")
-
-# img = tf.expand_dims(img_array, 0)[0] # Create a batch
-# expected_label = 'CG'
-#%%
-# human readable
-print(img)
-print(img.shape)
-# %%
-# UNCOMMENT IF YOU WANT TO SEE THIS, OTHERWISE IT'LL STOP THE PROGRAM
-from matplotlib import pyplot as plt
-plt.imshow(img, interpolation='nearest')
-plt.show()
-# %%
 # actually use the model
-import numpy as np
-img_array = tf.keras.utils.img_to_array(img)
-img_array = tf.expand_dims(img_array, 0) # Create a batch
-
-predictions = model.predict(img_array)
-score = tf.nn.softmax(predictions[0])
-
+# %%
 #assert
-print('predicted: ' + str(np.argmax(predictions)))
-print('expected: ' + str(expected_label))
+def test_jpg(filename, expected_value):
+  img_array = get_data_from_file(filename=filename, label=f'CG-{expected_value}')
+  predictions = predict(model=model, img_array=img_array)
+  equal = np.argmax(predictions) == expected_value
+
+  print(f'predicted value: {str(np.argmax(predictions))} : expected: {str(expected_value)} : equal: {str(equal)}')
+  show_img(img=img_array)
+  return 1 if equal else 0
+
+def test_digits(directory_name, extension):
+  print(f'testing {directory_name}')
+  current_score = 0
+  max_glyphs = 10
+  for red_idx in range(max_glyphs):
+    expected_value = red_idx
+    score = test_jpg(filename=f"{directory_name}/CG-{expected_value}.{extension}", expected_value=expected_value)
+    current_score += score
+  
+  print(f"Test of {directory_name} completed.  Score is: {current_score}/{max_glyphs}")
+
+# %%
+test_digits('Red', 'jpg')
+test_digits('Blue-on-white', 'jpg')
+test_digits('White', 'jpg')
+test_digits('PNG/black-on-white', 'png')
+test_digits('PNG/white-on-black', 'png')
+test_digits('white-background', 'jpg')
+
+
 # %%
