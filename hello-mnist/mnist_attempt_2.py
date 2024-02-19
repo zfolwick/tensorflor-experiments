@@ -3,7 +3,8 @@
 # The below script represents the core of the e2e workflow, while encapsulating core functions
 # in functions to allow ease of refactoring and code reuse.
 
-# This can be run either as a jupyter notebook or in terminal via python ./mnist_attempt_1.py
+# This can be run either as a jupyter notebook or in terminal via 
+# python ./mnist_attempt_2.py
 # to adjust, scroll down to the banner below:
 
 #  #################################

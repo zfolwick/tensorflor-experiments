@@ -3,10 +3,13 @@
 # The below script represents the core of the e2e workflow, encapsulated in methods to
 # allow for code reuse.  
 # 
-# The model is trained using keras Tuner. To install, use: pip install -q -U keras-tuner
+# The model is trained using keras Tuner. 
+# To install, use: pip install -q -U keras-tuner
 
 #
-# This can be run either as a jupyter notebook or in terminal via python ./mnist_attempt_1.py
+# This can be run either as a jupyter notebook or in terminal via 
+# $>  python ./mnist_attempt_3.py [create]
+
 # to adjust, scroll down to the banner below:
 
 #  #################################
