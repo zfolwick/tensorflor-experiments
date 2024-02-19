@@ -10,7 +10,9 @@
 # and adjust the index of the x_test array.
 #
 #%%
-# CREATE MODEL AND TRAIN
+#################################
+#### Model creation library
+#################################
 import tensorflow as tf
 
 def data_selection():
@@ -41,11 +43,9 @@ def create_model(test, train, labels):
 
 
 
-
-
 #%%
 #################################
-#### Testing Library
+#### Testing functions Library
 #################################
 import os
 import numpy as np
@@ -88,18 +88,7 @@ def predict(model, img_array):
   score = tf.nn.softmax(predictions[0])
   # print(score)
   return predictions
-#%%
 
-
-(x_train, y_train), (x_test, y_test) = data_selection()
-model = create_model(x_test, x_test, y_test)
-
-#################################
-#### Testing
-#################################
-# actually use the model
-# %%
-#assert
 def test_jpg(filename, expected_value):
   img_array = get_data_from_file(filename=filename, label=f'CG-{expected_value}')
   predictions = predict(model=model, img_array=img_array)
@@ -120,13 +109,33 @@ def test_digits(directory_name, extension):
   
   print(f"Test of {directory_name} completed.  Score is: {current_score}/{max_glyphs}")
 
+
+
+
+
+####################################################################
+####################################################################
+####################################################################
+##############         USAGE
+####################################################################
+####################################################################
+####################################################################
+
+#%%
+import sys
+# model creation/training
+if len(sys.argv) > 1 and sys.argv[1] == "create":
+  (x_train, y_train), (x_test, y_test) = data_selection()
+  model = create_model(x_test, x_test, y_test)
+  model.save("mnist_model")
+
 # %%
+if os.path.exists("mnist_model"):
+  model = tf.keras.models.load_model("mnist_model")
+# actual model testing
 test_digits('Red', 'jpg')
 test_digits('Blue-on-white', 'jpg')
 test_digits('White', 'jpg')
 test_digits('PNG/black-on-white', 'png')
 test_digits('PNG/white-on-black', 'png')
 test_digits('white-background', 'jpg')
-
-
-# %%
