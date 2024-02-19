@@ -1,4 +1,7 @@
-# This takes the mnist dataset and performs an image classification.  This is the "Hello World!" of the machine learning world.  The below script represents the core of the e2e workflow.
+# This takes the mnist dataset and performs an image classification. 
+# This is the "Hello World!" of the machine learning world.  
+# The below script represents the core of the e2e workflow, while encapsulating core functions
+# in functions to allow ease of refactoring and code reuse.
 
 # This can be run either as a jupyter notebook or in terminal via python ./mnist_attempt_1.py
 # to adjust, scroll down to the banner below:
@@ -139,3 +142,5 @@ test_digits('White', 'jpg')
 test_digits('PNG/black-on-white', 'png')
 test_digits('PNG/white-on-black', 'png')
 test_digits('white-background', 'jpg')
+
+# %%
