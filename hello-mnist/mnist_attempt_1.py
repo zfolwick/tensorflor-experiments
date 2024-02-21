@@ -51,7 +51,7 @@ print(img)
 import os
 import numpy as np
 np.set_printoptions(linewidth=180)
-filename = "Red/CG-0.jpg"
+filename = "Red/CG-7.jpg"
 # test_image_path = os.path.join("test_images", filename)
 fullpath = os.path.abspath(filename)
 path = tf.keras.utils.get_file(
