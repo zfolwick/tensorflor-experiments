@@ -28,15 +28,13 @@ def model_builder(hp):
 
   # Tune the number of units in the first Dense layer
   # Choose an optimal value between 32-512
-  hp_units = hp.Int('units', min_value=32, max_value=512, step=10)
   for i in range(hp.Int('n_layers', 1, 10)):
+    hp_units = hp.Int(f'units_{str(i)}', min_value=32, max_value=512, step=32)
     model.add(tf.keras.layers.Dense(units=hp_units))
     # model.add(tf.keras.layers.Activation('relu'))
     model.add(tf.keras.layers.Activation('gelu'))
   
   model.add(tf.keras.layers.Dense(units=100))
-
-  print(model.summary())
 
   # Tune the learning rate for the optimizer
   # Choose an optimal value from 0.01, 0.001, or 0.0001
@@ -128,18 +126,17 @@ def predict(model, img_array):
   # print(score)
   return predictions
 
-def test_jpg(filename, expected_value):
+def   test_jpg(filename, expected_value):
   img_array = get_data_from_file(filename=filename, label=f'CG-{expected_value}')
   predictions = predict(model=model, img_array=img_array)
   equal = np.argmax(predictions) == expected_value
 
-  print(f'predicted value: {str(np.argmax(predictions))} : expected: {str(expected_value)} : equal: {str(equal)}')
+  # print(f'predicted value: {str(np.argmax(predictions))} : expected: {str(expected_value)} : equal: {str(equal)}')
   # return 1 if equal else show_img(img=img_array) # uncomment this if you run as a jupyter notebook
   return 1 if equal else 0 # uncomment this if you run as a jupyter notebook
 
 
 def test_digits(directory_name, extension):
-  print(f'testing {directory_name}')
   current_score = 0
   max_glyphs = 10
   for red_idx in range(max_glyphs):
@@ -150,6 +147,25 @@ def test_digits(directory_name, extension):
   print(f"Test of {directory_name} completed.  Score is: {current_score}/{max_glyphs}")
 
 
+def test_digit(digit):
+  jpgs = ['Red', 'Blue-on-white', 'White', 'white-background']
+  pngs = ['PNG/black-on-white',
+          'PNG/white-on-black', 
+          'PNG/red-on-black-crisp-antialiasing',
+          'PNG/red-on-black-sharp-antialiasing',
+          'PNG/red-on-black-smooth-antialiasing',
+          'PNG/red-on-black-strong-antialiasing']
+  current_score = 0
+  for jpg in jpgs:
+    score = test_jpg(filename=f"{jpg}/CG-{digit}.jpg", expected_value=digit)
+    current_score += score
+  
+  for png in pngs:
+    score = test_jpg(filename=f"{png}/CG-{digit}.png", expected_value=digit)
+    current_score += score
+  
+  total = len(pngs) + len(jpgs)
+  return current_score, total
 
 
 
@@ -207,8 +223,13 @@ test_digits('PNG/red-on-black-crisp-antialiasing', 'png')
 test_digits('PNG/red-on-black-sharp-antialiasing', 'png')
 test_digits('PNG/red-on-black-smooth-antialiasing', 'png')
 
-# test_digits('white-background', 'jpg')
-# test_digits('PNG/White-on-black', 'png')
-# test_digits('Blue-on-white', 'jpg')
-# test_digits('PNG/red-on-black-strong-antialiasing', 'png')
-# %%
+test_digits('white-background', 'jpg')
+test_digits('PNG/White-on-black', 'png')
+test_digits('Blue-on-white', 'jpg')
+test_digits('PNG/red-on-black-strong-antialiasing', 'png')
+
+for i in range(10):
+  curr = test_digit(i)
+  print(f'# ability to detect {i} : { curr[0] } out of {curr[1]}')
+  
+print(model.summary())
