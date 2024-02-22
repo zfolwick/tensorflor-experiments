@@ -27,11 +27,26 @@ import keras_tuner as kt
 
 def model_builder(hp):
   model = tf.keras.Sequential()
+  model.add(tf.keras.layers.RandomTranslation(height_factor=0.5, width_factor=0.5))
   model.add(tf.keras.layers.Flatten(input_shape=(28, 28)))
 
-  # this uses the discovered quantity of Dense layers discovered in attempt 3a.py
-  for i in range(hp.Int('n_layers', 1, 10)):
-    hp_units = hp.Int(f'units_{str(i)}', min_value=32, max_value=512, step=32)
+  # I don't think a CNN should have a flatten layer prior to it coming in.  Only Dense.
+  # for i in range(hp.Int('n_layers_cnn', 1, 50)):
+  #   hp_units = hp.Int(f'units_{str(i)}', min_value=0, max_value=512, step=2)
+  #   model.add(tf.keras.layers.Conv2D(
+  #     units=hp_units,
+  #     activation=hp.Choice(
+  #                   f'dense_activation_{str(i)}',
+  #                   values=['relu', 'tanh', 'sigmoid', 'gelu', 'selu', 'leaky_relu', 'mish'],
+  #                   default='relu')),
+  #     kernel_initializer=hp.Choice(f'kernel_init_{str(i)}',
+  #                                 values=['he_normal', 'he_uniform', 'lecun_normal', 'lecun_uniform'])
+  #       )
+  #   model.add(tf.keras.layers.MaxPooling2D(pool_size=(2,2), padding='valid'))
+  # Needs a flattening layer in order to be able to be accepted by a dense function?
+  
+  for i in range(hp.Int('n_layers_dense', 1, 50)):
+    hp_units = hp.Int(f'units_{str(i)}', min_value=1, max_value=512, step=2)
     model.add(tf.keras.layers.Dense(
       units=hp_units,
       activation=hp.Choice(
@@ -39,15 +54,21 @@ def model_builder(hp):
                     values=['relu', 'tanh', 'sigmoid', 'gelu', 'selu', 'leaky_relu', 'mish'],
                     default='relu')))
 
-  model.add(tf.keras.layers.Dense(units=hp.Int(f'final_units', min_value=5, max_value=512, step=5),
-            activation=hp.Choice(
-                    f'final_activation',
-                    values=['softmax', 'relu', 'tanh', 'sigmoid', 'gelu', 'selu', 'leaky_relu', 'mish'],
-                    default='relu')))
+  # model.add(tf.keras.layers.Dense(units=hp.Int(f'final_units', min_value=1, max_value=512, step=1),
+  #           activation=hp.Choice(
+  #                   f'final_activation',
+  #                   values=['softmax', 'relu', 'tanh', 'sigmoid', 'gelu', 'selu', 'leaky_relu', 'mish'],
+  #                   default='relu')))
+  # here we choose 10 for the final layer 
+  model.add(tf.keras.layers.Dense(units=10,
+          activation=hp.Choice(
+                  f'final_activation',
+                  values=['softmax', 'relu', 'tanh', 'sigmoid', 'gelu', 'selu', 'leaky_relu', 'mish'],
+                  default='relu')))
   
   # Tune the learning rate for the optimizer
   # Choose an optimal value from 0.01, 0.001, or 0.0001
-  hp_learning_rate = hp.Choice('learning_rate', values=[1e-2, 1e-3, 1e-4])
+  hp_learning_rate = hp.Choice('learning_rate', values=[1e-2, 1e-3, 1e-4, 1e-5])
 
   model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=hp_learning_rate),
                 loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
@@ -62,30 +83,6 @@ def data_selection():
   x_train, x_test = x_train / 255.0, x_test / 255.0
   return (x_train, y_train), (x_test, y_test) 
 
-def create_model(test, train, labels):
-  model = tf.keras.models.Sequential()
-  model.add(tf.keras.layers.Flatten(input_shape=(28, 28)))
-  
-  #hidden layers
-  model.add(tf.keras.layers.Ac)
-  model.add(tf.keras.layers.Dense(128, activation='relu'))
-  model.add(tf.keras.layers.Dropout(0.2))
-  
-  # 
-  model.add(tf.keras.layers.Dense(10)) # number of classes.
-  model.add(tf.keras.layers.Softmax()) # use softmax when having multiple classes
-
-  loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-  optimizer = tf.keras.optimizer.Adam()
-  model.compile(optimizer=optimizer,
-                loss=loss_fn,
-                metrics=['accuracy'])
-
-  model.fit(train, labels, epochs=5)
-  model.evaluate(test,  labels, verbose=2)
-  
-  return model
-
 def tune_model():
   (x_train, y_train), (x_test, y_test) = data_selection()
   
@@ -97,8 +94,8 @@ def tune_model():
                       project_name='intro_to_kt') 
   stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
   tuner.search_space_summary()
-  tuner.search(x_train, y_train, epochs=50, validation_split=0.2, callbacks=[stop_early])
-  best_hps=tuner.get_best_hyperparameters(num_trials=3)[0]
+  tuner.search(x_train, y_train, epochs=150, validation_split=0.2, callbacks=[stop_early])
+  best_hps=tuner.get_best_hyperparameters(num_trials=1)[0]
 
   model = tuner.hypermodel.build(best_hps)
   history = model.fit(x_train, y_train, epochs=50, validation_split=0.2)
@@ -222,19 +219,18 @@ if len(sys.argv) > 1 and sys.argv[1] == "create":
 if os.path.exists("mnist_model"):
   model = tf.keras.models.load_model("mnist_model")
 # actual model testing
-test_digits('PNG/black-on-white', 'png')
 
-test_digits('Red', 'jpg')
-test_digits('White', 'jpg')
 test_digits('PNG/red-on-black-crisp-antialiasing', 'png')
 test_digits('PNG/red-on-black-sharp-antialiasing', 'png')
 test_digits('PNG/red-on-black-smooth-antialiasing', 'png')
+test_digits('PNG/red-on-black-strong-antialiasing', 'png')
 
+test_digits('PNG/black-on-white', 'png')
+test_digits('Red', 'jpg')
+test_digits('White', 'jpg')
 test_digits('white-background', 'jpg')
 test_digits('PNG/White-on-black', 'png')
 test_digits('Blue-on-white', 'jpg')
-test_digits('PNG/red-on-black-strong-antialiasing', 'png')
-
 for i in range(10):
   curr = test_digit(i)
   print(f'# ability to detect {i} : { curr[0] }/ {curr[1]}')
