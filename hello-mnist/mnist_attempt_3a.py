@@ -28,13 +28,13 @@ def model_builder(hp):
 
   # Tune the number of units in the first Dense layer
   # Choose an optimal value between 32-512
-  hp_units = hp.Int('units', min_value=32, max_value=512, step=32)
+  hp_units = hp.Int('units', min_value=32, max_value=512, step=10)
   for i in range(hp.Int('n_layers', 1, 10)):
     model.add(tf.keras.layers.Dense(units=hp_units))
     # model.add(tf.keras.layers.Activation('relu'))
     model.add(tf.keras.layers.Activation('gelu'))
   
-  model.add(tf.keras.layers.Dense(units=500))
+  model.add(tf.keras.layers.Dense(units=100))
 
   print(model.summary())
 
@@ -58,6 +58,9 @@ def data_selection():
 def create_model(test, train, labels):
   model = tf.keras.models.Sequential()
   model.add(tf.keras.layers.Flatten(input_shape=(28, 28)))
+
+  model.add(tf.keras.layers.Dense(10)) # number of classes.
+  model.add(tf.keras.layers.Softmax()) # use softmax when having multiple classes
   
   #hidden layers
   model.add(tf.keras.layers.Ac)
@@ -65,8 +68,6 @@ def create_model(test, train, labels):
   model.add(tf.keras.layers.Dropout(0.2))
   
   # 
-  model.add(tf.keras.layers.Dense(500)) # number of classes.
-  model.add(tf.keras.layers.Softmax()) # use softmax when having multiple classes
 
   loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
   optimizer = tf.keras.optimizer.Adam()
@@ -173,7 +174,7 @@ if len(sys.argv) > 1 and sys.argv[1] == "create":
                       directory='my_dir',
                       project_name='intro_to_kt')
   stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
-  tuner.search(x_train, y_train, epochs=50, validation_split=0.2, callbacks=[stop_early])
+  tuner.search(x_train, y_train, epochs=150, validation_split=0.2, callbacks=[stop_early])
   best_hps=tuner.get_best_hyperparameters(num_trials=3)[0]
 
   print(f"""
