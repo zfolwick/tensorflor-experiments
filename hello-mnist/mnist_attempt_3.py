@@ -1,0 +1,238 @@
+# This takes the mnist dataset and performs an image classification. 
+# This is the "Hello World!" of the machine learning world.  
+# The below script represents the core of the e2e workflow, encapsulated in methods to
+# allow for code reuse.  
+# 
+# The model is trained using keras Tuner. 
+# To install, use: pip install -q -U keras-tuner
+
+#
+# This can be run either as a jupyter notebook or in terminal via 
+# $>  python ./mnist_attempt_3.py [create]
+
+# to adjust, scroll down to the banner below:
+
+#  #################################
+#  #### Testing
+#  #################################
+#
+# and adjust the index of the x_test array.
+#
+#%%
+#################################
+#### Model creation library
+#################################
+import tensorflow as tf
+import keras_tuner as kt
+
+def model_builder(hp):
+  model = tf.keras.Sequential()
+  model.add(tf.keras.layers.RandomTranslation(height_factor=0.5, width_factor=0.5))
+  model.add(tf.keras.layers.Flatten(input_shape=(28, 28)))
+
+  # I don't think a CNN should have a flatten layer prior to it coming in.  Only Dense.
+  # for i in range(hp.Int('n_layers_cnn', 1, 50)):
+  #   hp_units = hp.Int(f'units_{str(i)}', min_value=0, max_value=512, step=2)
+  #   model.add(tf.keras.layers.Conv2D(
+  #     units=hp_units,
+  #     activation=hp.Choice(
+  #                   f'dense_activation_{str(i)}',
+  #                   values=['relu', 'tanh', 'sigmoid', 'gelu', 'selu', 'leaky_relu', 'mish'],
+  #                   default='relu')),
+  #     kernel_initializer=hp.Choice(f'kernel_init_{str(i)}',
+  #                                 values=['he_normal', 'he_uniform', 'lecun_normal', 'lecun_uniform'])
+  #       )
+  #   model.add(tf.keras.layers.MaxPooling2D(pool_size=(2,2), padding='valid'))
+  # Needs a flattening layer in order to be able to be accepted by a dense function?
+  
+  for i in range(hp.Int('n_layers_dense', 1, 50)):
+    hp_units = hp.Int(f'units_{str(i)}', min_value=1, max_value=512, step=2)
+    model.add(tf.keras.layers.Dense(
+      units=hp_units,
+      activation=hp.Choice(
+                    f'dense_activation_{str(i)}',
+                    values=['relu', 'tanh', 'sigmoid', 'gelu', 'selu', 'leaky_relu', 'mish'],
+                    default='relu')))
+
+  # model.add(tf.keras.layers.Dense(units=hp.Int(f'final_units', min_value=1, max_value=512, step=1),
+  #           activation=hp.Choice(
+  #                   f'final_activation',
+  #                   values=['softmax', 'relu', 'tanh', 'sigmoid', 'gelu', 'selu', 'leaky_relu', 'mish'],
+  #                   default='relu')))
+  # here we choose 10 for the final layer 
+  model.add(tf.keras.layers.Dense(units=10,
+          activation=hp.Choice(
+                  f'final_activation',
+                  values=['softmax', 'relu', 'tanh', 'sigmoid', 'gelu', 'selu', 'leaky_relu', 'mish'],
+                  default='relu')))
+  
+  # Tune the learning rate for the optimizer
+  # Choose an optimal value from 0.01, 0.001, or 0.0001
+  hp_learning_rate = hp.Choice('learning_rate', values=[1e-2, 1e-3, 1e-4, 1e-5])
+
+  model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=hp_learning_rate),
+                loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+                metrics=['accuracy'])
+
+  return model
+
+def data_selection():
+  mnist = tf.keras.datasets.mnist
+  (x_train, y_train), (x_test, y_test) = mnist.load_data()
+  #normalize
+  x_train, x_test = x_train / 255.0, x_test / 255.0
+  return (x_train, y_train), (x_test, y_test) 
+
+def tune_model():
+  (x_train, y_train), (x_test, y_test) = data_selection()
+  
+  tuner = kt.Hyperband(model_builder,
+                      objective='val_accuracy',
+                      max_epochs=10,
+                      factor=2,
+                      directory='my_dir',
+                      project_name='intro_to_kt') 
+  stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
+  tuner.search_space_summary()
+  tuner.search(x_train, y_train, epochs=150, validation_split=0.2, callbacks=[stop_early])
+  best_hps=tuner.get_best_hyperparameters(num_trials=1)[0]
+
+  model = tuner.hypermodel.build(best_hps)
+  history = model.fit(x_train, y_train, epochs=50, validation_split=0.2)
+
+  val_acc_per_epoch = history.history['val_accuracy']
+  best_epoch = val_acc_per_epoch.index(max(val_acc_per_epoch)) + 1
+  print('Best epoch: %d' % (best_epoch,))
+  
+  hypermodel = tuner.hypermodel.build(best_hps)
+  hypermodel.fit(x_train, y_train, epochs=best_epoch, validation_split=0.2)
+  eval_result = hypermodel.evaluate(x_test, y_test)
+  print("[test loss, test accuracy]:", eval_result)
+
+  # get the best model
+  best_model = tuner.get_best_models(1)[0]
+  # model = create_model(x_test, x_test, y_test)
+  model.save("mnist_model")
+
+#%%
+#################################
+#### Testing functions Library
+#################################
+import os
+import numpy as np
+from matplotlib import pyplot as plt
+np.set_printoptions(linewidth=180)
+## human testing data selection
+def use_data_from_training_set(index):
+  img = x_test[index]
+  expected_label = y_test[index]
+  return img, expected_label
+
+
+def get_data_from_file(filename, label):
+  fullpath = os.path.abspath(filename)
+  # path = tf.keras.utils.get_file(
+  #           filename, "file://" + fullpath
+  #           )
+  raw_img = tf.keras.utils.load_img(
+              fullpath,
+              grayscale=True,
+              target_size=(28, 28)
+          )
+  img_array = tf.keras.utils.img_to_array(raw_img)
+  img = tf.expand_dims(img_array, 0)[0] # Create a batch
+  return img
+
+# UNCOMMENT IF YOU WANT TO SEE THIS, OTHERWISE IT'LL STOP THE PROGRAM
+def show_img(img):
+  img = tf.reshape(img, (28, 28))
+  img = tf.cast(img, dtype=tf.float64)
+  print(img)
+  img_array = tf.keras.utils.img_to_array(img)
+  img = tf.expand_dims(img_array, 0)[0] # Create a batch
+  plt.imshow(img, interpolation='nearest')
+  plt.show()
+
+def predict(model, img_array):
+  img_array = tf.expand_dims(img_array, 0) # Create a batch
+  predictions = model.predict(img_array, verbose=None)
+  score = tf.nn.softmax(predictions[0])
+  # print(score)
+  return predictions
+
+def test_jpg(filename, expected_value):
+  img_array = get_data_from_file(filename=filename, label=f'CG-{expected_value}')
+  predictions = predict(model=model, img_array=img_array)
+  equal = np.argmax(predictions) == expected_value
+
+  # print(f'predicted value: {str(np.argmax(predictions))} : expected: {str(expected_value)} : equal: {str(equal)}')
+  # show_img(img=img_array) # uncomment this if you run as a jupyter notebook
+  return 1 if equal else 0
+
+def test_digits(directory_name, extension):
+  current_score = 0
+  max_glyphs = 10
+  for red_idx in range(max_glyphs):
+    expected_value = red_idx
+    score = test_jpg(filename=f"{directory_name}/CG-{expected_value}.{extension}", expected_value=expected_value)
+    current_score += score
+  
+  print(f"Test of {directory_name} completed.  Score is: {current_score}/{max_glyphs}")
+
+def test_digit(digit):
+  jpgs = ['Red', 'Blue-on-white', 'White', 'white-background']
+  pngs = ['PNG/black-on-white',
+          'PNG/white-on-black', 
+          'PNG/red-on-black-crisp-antialiasing',
+          'PNG/red-on-black-sharp-antialiasing',
+          'PNG/red-on-black-smooth-antialiasing',
+          'PNG/red-on-black-strong-antialiasing']
+  current_score = 0
+  for jpg in jpgs:
+    score = test_jpg(filename=f"{jpg}/CG-{digit}.jpg", expected_value=digit)
+    current_score += score
+  
+  for png in pngs:
+    score = test_jpg(filename=f"{png}/CG-{digit}.png", expected_value=digit)
+    current_score += score
+  
+  return current_score, len(pngs) + len(jpgs)
+
+
+
+
+####################################################################
+####################################################################
+####################################################################
+##############         USAGE
+####################################################################
+####################################################################
+####################################################################
+
+#%%
+import sys
+# model creation/training
+if len(sys.argv) > 1 and sys.argv[1] == "create":
+  tune_model()
+
+# %%
+if os.path.exists("mnist_model"):
+  model = tf.keras.models.load_model("mnist_model")
+# actual model testing
+
+test_digits('PNG/red-on-black-crisp-antialiasing', 'png')
+test_digits('PNG/red-on-black-sharp-antialiasing', 'png')
+test_digits('PNG/red-on-black-smooth-antialiasing', 'png')
+test_digits('PNG/red-on-black-strong-antialiasing', 'png')
+
+test_digits('PNG/black-on-white', 'png')
+test_digits('Red', 'jpg')
+test_digits('White', 'jpg')
+test_digits('white-background', 'jpg')
+test_digits('PNG/White-on-black', 'png')
+test_digits('Blue-on-white', 'jpg')
+for i in range(10):
+  curr = test_digit(i)
+  print(f'# ability to detect {i} : { curr[0] }/ {curr[1]}')
+  
+print(model.summary())
