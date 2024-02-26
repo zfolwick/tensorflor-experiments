@@ -26,7 +26,17 @@ tf.keras.utils.plot_model(
     )
 
 
-
+#%%
+from keras.preprocessing.image import ImageDataGenerator
+datagen = ImageDataGenerator(
+    rotation_range=20,      # Random rotation in the range [-20, 20] degrees
+    width_shift_range=0.1,  # Random horizontal shift by 10% of the width
+    height_shift_range=0.1, # Random vertical shift by 10% of the height
+    shear_range=0.2,        # Random shear transformation in the range [-0.2, 0.2]
+    zoom_range=0.2,         # Random zoom by scaling up to 20%
+    horizontal_flip=True,   # Random horizontal flip
+    fill_mode='nearest'     # Fill mode for handling newly created pixels
+)
 
 
 
@@ -57,6 +67,7 @@ print('########')
 # Convert custom dataset to NumPy arrays
 
 custom_images = []
+augmented_ds_CG = []
 for images, labels in ds_CG:
     cg_labels = np.array(["CG"] * len(images))
     hw_labels = np.array(["HW"] * len(x_train_mnist))
@@ -65,23 +76,55 @@ for images, labels in ds_CG:
 # Convert custom dataset to NumPy arrays
 custom_images = np.array(custom_images)
 custom_labels = np.array(cg_labels)
+
 #%%
 # Reshape the MNIST data to match the shape of ds_CG
-# x_train_mnist = np.expand_dims(x_train_mnist, axis=-1)
 print('##################')
 print(x_train_mnist.shape)
 print(custom_images.shape)
 
+x_train_mnist = np.expand_dims(x_train_mnist, axis=-1)
 # x_train_mnist = np.squeeze(x_train_mnist, axis=(3,4))
-custom_images = np.squeeze(custom_images, axis=(0,4))
+custom_images = np.squeeze(custom_images, axis=(0))
 
 print('#####  NEW  #############')
 print(x_train_mnist.shape)
 print(custom_images.shape)
+
+
+#%%
+#### Augment the custom data
+
+# Augment the images
+desired_augmented_samples = 60000
+augmented_images = []
+augmented_labels = []
+print(len(custom_images))
+for batch in datagen.flow(custom_images, batch_size=len(custom_images), shuffle=False):
+    augmented_images.append(batch)
+    if len(augmented_images) * len(batch) >= desired_augmented_samples:
+        break
+
+
+
+# Concatenate augmented images into a single array
+augmented_images = np.concatenate(augmented_images, axis=0)
+
+augmented_labels = np.full(len(augmented_images),"CG")
+# Print the shape of the augmented images array
+print("Shape of augmented images:", augmented_images.shape)
+print(len(augmented_images))
+print(len(augmented_labels))
+
+
+
+
+
+
 #%%
 # Concatenate the data
-x_train_combined = np.concatenate((custom_images, x_train_mnist), axis=0)
-y_train_combined = np.concatenate((custom_labels, hw_labels), axis=0)
+x_train_combined = np.concatenate((augmented_images, x_train_mnist), axis=0)
+y_train_combined = np.concatenate((augmented_labels, hw_labels), axis=0)
 
 # Shuffle the combined dataset
 shuffle_index = np.random.permutation(len(x_train_combined))
@@ -100,9 +143,12 @@ base_model.pop() #strip final layer
 
 model = tf.keras.Sequential()
 model.add(base_model)
+
 # try to recognize shapes
-model.add(tf.keras.layers.Conv2D(units=64, activation='selu'))
-model.add(tf.keras.layers.Conv2D(units=32, activation='selu'))
+model.add(tf.keras.layers.Reshape((None, 502),
+                                  input_shape=x_train_combined.shape))
+model.add(tf.keras.layers.Conv2D(filters=64, input_shape=(28,28,1), kernel_size=5, activation='selu'))
+model.add(tf.keras.layers.Conv2D(filters=32, activation='selu'))
 
 model.add(tf.keras.layers.Flatten())
 # get a ton of neurons... we'll whittle this down later.  
