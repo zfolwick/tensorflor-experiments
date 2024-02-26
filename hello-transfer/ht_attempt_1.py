@@ -100,21 +100,25 @@ base_model.pop() #strip final layer
 
 model = tf.keras.Sequential()
 model.add(base_model)
+# try to recognize shapes
 model.add(tf.keras.layers.Conv2D(units=64, activation='selu'))
 model.add(tf.keras.layers.Conv2D(units=32, activation='selu'))
 
 model.add(tf.keras.layers.Flatten())
+# get a ton of neurons... we'll whittle this down later.  
 model.add(tf.keras.layers.Dense(units=1024, activation='selu'))
 model.add(tf.kerass.layers.Dense(units=1, activation='sigmoid'))
 
-
+# loss function is changed because there's only 2 classes
+loss_function = tf.keras.losses.BinaryCrossEntropy(from_logits=True)
 model.compile(
-    optimizer='adam',
-    loss=tf.keras.losses.BinaryCrossEntropy(from_logits=True),
+    optimizer='adam', # probably will change this to some L2 error or something
+    loss=loss_function,
     metrics=['accuracy'])
 
 batch_size=4 # how many pics at once?
 epochs=15  
+# undefined variables alert
 model.fit(training_images, labels)
 model.evaluate(test_images, labels, verbose=2)
         
