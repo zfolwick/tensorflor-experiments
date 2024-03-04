@@ -13,12 +13,12 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 #####################
 #### fetch model ####
 #####################
-base_model = tf.keras.models.load_model("../hello-mnist/mnist_model")
+old_model = tf.keras.models.load_model("../hello-mnist/mnist_model")
 #%%
-base_model.summary()
-print(len(base_model.layers))
+old_model.summary()
+print(len(old_model.layers))
 tf.keras.utils.plot_model(
-    base_model,
+    old_model,
     show_shapes=True,
     show_layer_activations=True,
     expand_nested=True,
@@ -27,6 +27,7 @@ tf.keras.utils.plot_model(
 
 
 #%%
+# augment the existing data with new  data
 from keras.preprocessing.image import ImageDataGenerator
 datagen = ImageDataGenerator(
     rotation_range=20,      # Random rotation in the range [-20, 20] degrees
@@ -131,6 +132,7 @@ shuffle_index = np.random.permutation(len(x_train_combined))
 x_train_combined = x_train_combined[shuffle_index]
 y_train_combined = y_train_combined[shuffle_index]
 
+
 # Print the shape of the combined dataset
 print("Combined training dataset shape:", x_train_combined.shape)
 
@@ -138,25 +140,28 @@ print("Combined training dataset shape:", x_train_combined.shape)
 ###############################
 ####### XFER
 ###############################
-base_model.trainable = False
-base_model.pop() #strip final layer
+from keras.models import Model
 
+#strip flatten and final classification layer
+old_model = Model(old_model.input, old_model.layers[-4].output)
+base_model = tf.keras.Sequential() # Create a new model from the 2nd layer and all the convolutional blocks
+for layer in old_model.layers[1:]:
+  base_model.add(layer)
+
+#%%
 model = tf.keras.Sequential()
-model.add(base_model)
-
 # try to recognize shapes
-model.add(tf.keras.layers.Reshape((None, 502),
-                                  input_shape=x_train_combined.shape))
-model.add(tf.keras.layers.Conv2D(filters=64, input_shape=(28,28,1), kernel_size=5, activation='selu'))
-model.add(tf.keras.layers.Conv2D(filters=32, activation='selu'))
+model.add(tf.keras.layers.Conv2D(filters=32, input_shape=(28,28,1), kernel_size=5, activation='selu'))
+model.add(tf.keras.layers.Conv2D(filters=16, activation='selu', kernel_size=3))
 
 model.add(tf.keras.layers.Flatten())
 # get a ton of neurons... we'll whittle this down later.  
 model.add(tf.keras.layers.Dense(units=1024, activation='selu'))
-model.add(tf.kerass.layers.Dense(units=1, activation='sigmoid'))
+model.add(tf.keras.layers.Dense(units=1, activation='sigmoid'))
 
+#%%
 # loss function is changed because there's only 2 classes
-loss_function = tf.keras.losses.BinaryCrossEntropy(from_logits=True)
+loss_function = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 model.compile(
     optimizer='adam', # probably will change this to some L2 error or something
     loss=loss_function,
@@ -165,7 +170,7 @@ model.compile(
 batch_size=4 # how many pics at once?
 epochs=15  
 # undefined variables alert
-model.fit(training_images, labels)
+model.fit(x_train_combined, labels)
 model.evaluate(test_images, labels, verbose=2)
         
 ##########################################

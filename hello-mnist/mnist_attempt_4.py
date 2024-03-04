@@ -216,7 +216,7 @@ if len(sys.argv) > 1 and sys.argv[1] == "create":
                       # directory='my_dir',
                       # project_name='intro_to_kt')
   stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
-  tuner.search(x_train, y_train, epochs=25, validation_split=0.2, callbacks=[stop_early])
+  tuner.search(x_train, y_train, epochs=5, validation_split=0.2, callbacks=[stop_early])
   best_hps=tuner.get_best_hyperparameters(num_trials=3)[0]
 
 #   print(f"""
