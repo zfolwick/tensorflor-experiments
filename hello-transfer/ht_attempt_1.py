@@ -170,8 +170,12 @@ model.compile(
 batch_size=4 # how many pics at once?
 epochs=15  
 # undefined variables alert
-model.fit(x_train_combined, labels)
-model.evaluate(test_images, labels, verbose=2)
+training_data, testing_data = tf.keras.utils.split_dataset(
+    x_train_combined, 
+    left_size=0.8)
+labels = np.array([0,1])
+model.fit(training_data, labels)
+model.evaluate(testing_data, labels, verbose=2)
         
 ##########################################
 #######  Testable assertions 
