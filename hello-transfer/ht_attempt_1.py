@@ -124,6 +124,7 @@ print(len(augmented_labels))
 
 #%%
 # Concatenate the data
+# comine the images: cg image, hw images
 x_train_combined = np.concatenate((augmented_images, x_train_mnist), axis=0)
 y_train_combined = np.concatenate((augmented_labels, hw_labels), axis=0)
 
@@ -142,14 +143,17 @@ print("Combined training dataset shape:", x_train_combined.shape)
 ###############################
 from keras.models import Model
 
+old_model.trainable = False
 #strip flatten and final classification layer
 old_model = Model(old_model.input, old_model.layers[-4].output)
+
 base_model = tf.keras.Sequential() # Create a new model from the 2nd layer and all the convolutional blocks
 for layer in old_model.layers[1:]:
   base_model.add(layer)
 
 #%%
 model = tf.keras.Sequential()
+model.add(base_model)
 # try to recognize shapes
 model.add(tf.keras.layers.Conv2D(filters=32, input_shape=(28,28,1), kernel_size=5, activation='selu'))
 model.add(tf.keras.layers.Conv2D(filters=16, activation='selu', kernel_size=3))
@@ -167,16 +171,34 @@ model.compile(
     loss=loss_function,
     metrics=['accuracy'])
 
-batch_size=4 # how many pics at once?
+batch_size=32 # how many pics at once?
 epochs=15  
 # undefined variables alert
-training_data, testing_data = tf.keras.utils.split_dataset(
-    x_train_combined, 
-    left_size=0.8)
-labels = np.array([0,1])
-model.fit(training_data, labels)
-model.evaluate(testing_data, labels, verbose=2)
-        
+#%%
+combined_dataset = tf.data.Dataset.from_tensor_slices((x_train_combined, y_train_combined))
+
+# Get the total number of samples
+num_samples = len(x_train_combined)
+
+# Calculate the number of samples for training and testing
+train_size = int(0.8 * num_samples)
+test_size = num_samples - train_size
+
+# Shuffle and split the dataset
+train_dataset = combined_dataset.take(train_size)
+test_dataset = combined_dataset.skip(train_size)
+# Print the number of samples in each split
+print("Number of samples in training set:", train_size)
+print("Number of samples in testing set:", test_size)
+#%%
+# Fit the model
+model.fit(train_dataset.batch(batch_size).prefetch(buffer_size=tf.data.AUTOTUNE),
+          epochs=epochs,
+          validation_data=test_dataset.batch(batch_size).prefetch(buffer_size=tf.data.AUTOTUNE))
+
+# Evaluate the model
+test_loss, test_accuracy = model.evaluate(test_dataset.batch(batch_size).prefetch(buffer_size=tf.data.AUTOTUNE))
+    
 ##########################################
 #######  Testable assertions 
 ##########################################
