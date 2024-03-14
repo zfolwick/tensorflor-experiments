@@ -15,6 +15,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 #####################
 old_model = tf.keras.models.load_model("../hello-mnist/mnist_model")
 #%%
+print('old model')
 old_model.summary()
 print(len(old_model.layers))
 tf.keras.utils.plot_model(
@@ -56,6 +57,19 @@ ds_CG = tf.keras.utils.image_dataset_from_directory(
     image_size=(28,28)
     )
 
+
+# convert the prefetch dataset to a dataset.
+elements = list(ds_CG.as_numpy_iterator())
+features = [elem[0] for elem in elements]
+labels = [elem[1] for elem in elements]
+
+# Get the features and labels from the elements
+# Suppose your elements are tuples of (features, labels)
+features = [elem[0] for elem in elements]
+labels = [elem[1] for elem in elements]
+ds_CG = tf.data.Dataset.from_tensor_slices((features, labels))
+
+#%%
 (x_train_mnist, mnist_number_training_labels), (_, _) = mnist.load_data()
 #%%
 print('########')
@@ -86,7 +100,7 @@ print(custom_images.shape)
 
 x_train_mnist = np.expand_dims(x_train_mnist, axis=-1)
 # x_train_mnist = np.squeeze(x_train_mnist, axis=(3,4))
-custom_images = np.squeeze(custom_images, axis=(0))
+custom_images = np.squeeze(custom_images, axis=0)
 
 print('#####  NEW  #############')
 print(x_train_mnist.shape)
@@ -116,6 +130,24 @@ augmented_labels = np.full(len(augmented_images),"CG")
 print("Shape of augmented images:", augmented_images.shape)
 print(len(augmented_images))
 print(len(augmented_labels))
+
+#############
+## print augmented data
+#####################
+#%%
+import matplotlib.pyplot as plt
+def visualize(dataset):
+    plt.figure(figsize=(10, 10))
+    showImage = plt.imshow(dataset[1_300])
+    # for images, labels in dataset:
+    #     for i in range(9):
+    #         ax = plt.subplot(3, 3, i + 1)
+    #         showImage = plt.imshow(images[i].numpy().astype("uint8"))
+    #         # plt.title(self.__class_names[labels[i]])
+    #         plt.axis("off")
+
+visualize(augmented_images)
+
 
 
 
@@ -153,16 +185,16 @@ for layer in old_model.layers[1:]:
 
 #%%
 model = tf.keras.Sequential()
-model.add(base_model)
+# model.add(base_model)
 # try to recognize shapes
-model.add(tf.keras.layers.Conv2D(filters=32, input_shape=(28,28,1), kernel_size=5, activation='selu'))
-model.add(tf.keras.layers.Conv2D(filters=16, activation='selu', kernel_size=3))
+model.add(tf.keras.layers.Conv2D(filters=32, input_shape=(28,28,1), kernel_size=(5,5), activation='selu', padding='same'))
+model.add(tf.keras.layers.Conv2D(filters=14, kernel_size=(3,3), activation='selu', padding='same'))
+# model.add(tf.keras.layers.Conv2D(filters=7, activation='selu', kernel_size=1))
 
 model.add(tf.keras.layers.Flatten())
 # get a ton of neurons... we'll whittle this down later.  
-model.add(tf.keras.layers.Dense(units=1024, activation='selu'))
-model.add(tf.keras.layers.Dense(units=1, activation='sigmoid'))
-
+model.add(tf.keras.layers.Dense(units=1000, activation='selu'))
+model.add(tf.keras.layers.Dense(units=2, activation='sigmoid'))
 #%%
 # loss function is changed because there's only 2 classes
 loss_function = tf.keras.losses.BinaryCrossentropy(from_logits=True)
@@ -187,18 +219,45 @@ test_size = num_samples - train_size
 # Shuffle and split the dataset
 train_dataset = combined_dataset.take(train_size)
 test_dataset = combined_dataset.skip(train_size)
+train_images, labels = tuple(zip(*train_dataset))
+test_images, labels = tuple(zip(*test_dataset))
+#%%
+features = []
+label = []
+for element in train_dataset:
+    features, label = element
+
+train_dataset = tf.data.Dataset.from_tensor_slices((features, labels))
+
+#%%
+train_dataset = tf.expand_dims(train_dataset, axis=0)
+test_dataset = tf.expand_dims(test_dataset, axis=0)
+print(f'shape of training dataset: {train_dataset}')
 # Print the number of samples in each split
 print("Number of samples in training set:", train_size)
 print("Number of samples in testing set:", test_size)
 #%%
+# labels = []
+
+# # Iterate over the dataset to extract labels
+# for _, label in train_dataset:
+#     labels.append(label.numpy())
+
+# # Convert the list of labels to a NumPy array
+# labels_array = np.array(labels)
+
+# # Print the labels array
+# print("Labels array:", labels_array)
+#%%
 # Fit the model
-model.fit(train_dataset.batch(batch_size).prefetch(buffer_size=tf.data.AUTOTUNE),
-          epochs=epochs,
-          validation_data=test_dataset.batch(batch_size).prefetch(buffer_size=tf.data.AUTOTUNE))
+model.fit(train_dataset,batch_size=batch_size, epochs=epochs)
+
 
 # Evaluate the model
-test_loss, test_accuracy = model.evaluate(test_dataset.batch(batch_size).prefetch(buffer_size=tf.data.AUTOTUNE))
-    
+# test_loss, test_accuracy = model.evaluate(
+#     test_dataset, epochs=epochs
+#     )
+
 ##########################################
 #######  Testable assertions 
 ##########################################
