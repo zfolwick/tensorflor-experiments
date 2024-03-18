@@ -73,14 +73,16 @@ np.savez_compressed('CG-images/dataset/cg/computer_generated.npz',features=augme
 cg_npz_file = 'CG-images/dataset/cg/computer_generated.npz'
 cg = np.load(cg_npz_file)
 cg_tensor = tf.convert_to_tensor(cg)
+##################################### re-save mnist as HW
 
-##################################### loads mnist.npz
 #%%
 mnist = tf.keras.datasets.mnist
 # loads the data into a training and test set of features and labels
-(x_train, y_train), (x_test, y_test) = mnist.load_data()
-
-##################################### re-save mnist as HW
+(hw_images, _), (_, _) = mnist.load_data()
+hw_npz_file = 'CG-images/dataset/hw/handwritten.npz'
+np.savez_compressed(hw_npz_file, features=hw_images, label='HW')
+##################################### loads handwritten data
+hw = np.load(hw_npz_file)
 
 ##################################### merge both npz files.
 # %%
