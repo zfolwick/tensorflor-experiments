@@ -72,7 +72,6 @@ np.savez_compressed('CG-images/dataset/cg/computer_generated.npz',features=augme
 #%%
 cg_npz_file = 'CG-images/dataset/cg/computer_generated.npz'
 cg = np.load(cg_npz_file)
-cg_tensor = tf.convert_to_tensor(cg)
 ##################################### re-save mnist as HW
 
 #%%
@@ -81,8 +80,52 @@ mnist = tf.keras.datasets.mnist
 (hw_images, _), (_, _) = mnist.load_data()
 hw_npz_file = 'CG-images/dataset/hw/handwritten.npz'
 np.savez_compressed(hw_npz_file, features=hw_images, label='HW')
+
 ##################################### loads handwritten data
 hw = np.load(hw_npz_file)
 
 ##################################### merge both npz files.
 # %%
+# merge them both
+# Concatenate features and labels
+features = np.concatenate((tf.squeeze(cg["features"].astype(np.uint8))
+, hw["features"]), axis=0)
+labels = np.concatenate((np.zeros(len(cg["features"])), np.ones(len(hw["features"]))), axis=0)
+
+#%%
+from sklearn.model_selection import train_test_split
+# Split the data into training, validation, and test sets
+images_train, images_test, images_labels_train, images_labels_test = train_test_split(features, labels, test_size=0.2, random_state=42)
+
+# %%
+# prove to yourself
+#  that it's really correct
+#  by displaying the image
+from matplotlib import pyplot as plt
+# UNCOMMENT IF YOU WANT TO SEE THIS, OTHERWISE IT'LL STOP THE PROGRAM
+def show_img(img):
+  img = tf.reshape(img, (28, 28))
+  img = tf.cast(img, dtype=tf.float64)
+  print(img)
+  img_array = tf.keras.utils.img_to_array(img)
+  img = tf.expand_dims(img_array, 0)[0] # Create a batch
+  plt.imshow(img, interpolation='nearest')
+  plt.show()
+  
+first_image = images_train[0]
+show_img(first_image)
+
+
+
+
+
+
+
+
+# %%
+##########################################################
+##########################################################
+# You've successfully merged both datasets.            ###
+#  Now you need to perform the image classification    ###
+##########################################################
+##########################################################
