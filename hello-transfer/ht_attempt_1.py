@@ -16,15 +16,6 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 old_model = tf.keras.models.load_model("../hello-mnist/mnist_model")
 #%%
 print('old model')
-old_model.summary()
-print(len(old_model.layers))
-tf.keras.utils.plot_model(
-    old_model,
-    show_shapes=True,
-    show_layer_activations=True,
-    expand_nested=True,
-    rankdir='TB'
-    )
 
 
 #%%
@@ -206,6 +197,17 @@ model.compile(
 batch_size=32 # how many pics at once?
 epochs=15  
 # undefined variables alert
+
+
+
+
+
+
+
+
+#################################################################
+##### Trying to properly coerce the dataset to the proper type
+#################################################################
 #%%
 combined_dataset = tf.data.Dataset.from_tensor_slices((x_train_combined, y_train_combined))
 

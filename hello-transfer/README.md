@@ -17,8 +17,7 @@ whether it's handwritten or not.
 
 The roadmap is:
 [ DONE ] successfully ID digits 0 - 9 (hello world example)
-[ IN PROGRESS ] identify handwritten vs. computer generated digits 0 - 9 (hello fake world)
-[ ] identify handwritten vs comuter generated glyphs - (abstracting to more complex shapes)
+[ DONE ] identify handwritten vs. computer generated digits 0 - 9 (hello fake world)
 [ ] Identify hand drawn vs computer generated line drawings
 [ ] Identify a photograph vs digital art
 [ ] Identify digital insertions within a photo taken with a camera - (image segmentation)
