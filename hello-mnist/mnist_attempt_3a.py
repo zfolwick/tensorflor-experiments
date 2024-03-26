@@ -55,32 +55,6 @@ def data_selection():
   x_train, x_test = x_train / 255.0, x_test / 255.0
   return (x_train, y_train), (x_test, y_test) 
 
-def create_model(test, train, labels):
-  model = tf.keras.models.Sequential()
-  model.add(tf.keras.layers.Flatten(input_shape=(28, 28)))
-
-  model.add(tf.keras.layers.Dense(10)) # number of classes.
-  model.add(tf.keras.layers.Softmax()) # use softmax when having multiple classes
-  
-  #hidden layers
-  model.add(tf.keras.layers.Ac)
-  model.add(tf.keras.layers.Dense(128, activation='relu'))
-  model.add(tf.keras.layers.Dropout(0.2))
-  
-  # 
-
-  loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-  optimizer = tf.keras.optimizer.Adam()
-  model.compile(optimizer=optimizer,
-                loss=loss_fn,
-                metrics=['accuracy'])
-
-  model.fit(train, labels, epochs=5)
-  model.evaluate(test,  labels, verbose=2)
-  
-  return model
-
-
 
 #%%
 #################################
@@ -192,12 +166,6 @@ if len(sys.argv) > 1 and sys.argv[1] == "create":
                       factor=2,
                       directory='my_dir',
                       project_name='intro_to_kt')
-  # tuner = kt.Hyperband(model_builder,
-                      # objective='val_accuracy',
-                      # max_epochs=10,
-                      # factor=3,
-                      # directory='my_dir',
-                      # project_name='intro_to_kt')
   stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
   tuner.search(x_train, y_train, epochs=150, validation_split=0.2, callbacks=[stop_early])
   best_hps=tuner.get_best_hyperparameters(num_trials=3)[0]
@@ -219,7 +187,6 @@ if len(sys.argv) > 1 and sys.argv[1] == "create":
   eval_result = hypermodel.evaluate(x_test, y_test)
   print("[test loss, test accuracy]:", eval_result)
 
-  # model = create_model(x_test, x_test, y_test)
   model.save("mnist_model")
 
 # %%
